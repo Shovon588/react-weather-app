@@ -7,20 +7,15 @@ class App extends Component {
   state = {
     weather_object: {
       city: "",
-      date_time: "",
-      temperature: 29,
-      feels_like: 33,
-      weather: "",
+      country: "",
+      temperature: "",
+      feels_like: "",
+      weather: "Normal",
     },
   };
 
   changeHandler = () => {
     const city = document.getElementById("city").value;
-    if (city.length > 0) {
-      document.getElementById("searching-city").innerHTML = "Searching " + city;
-    } else {
-      document.getElementById("searching-city").innerHTML = "";
-    }
 
     var url =
       "https://api.openweathermap.org/data/2.5/weather?q=" +
@@ -36,17 +31,35 @@ class App extends Component {
         if (result.cod === 200) {
           let city = result.name;
           let temperature = Math.floor(result.main.temp - 273.15);
+          let feels_like = Math.floor(result.main.feels_like - 273.15);
+          let weather = result.weather[0].main;
+          let country = result.sys.country;
 
-          document.getElementById("searching-city").innerHTML =
-            "Result found for " + city;
-        } else if (city.length > 0) {
-          document.getElementById("searching-city").innerHTML =
-            "No result for  " + city;
+          let new_obj = {
+            city: city,
+            country: country,
+            temperature: temperature,
+            feels_like: feels_like,
+            weather: weather,
+          };
+
+          this.setState({
+            weather_object: new_obj,
+          });
         } else {
-          document.getElementById("searching-city").innerHTML = "";
+          let new_obj = {
+            city: "",
+            country: "",
+            temperature: "",
+            feels_like: "",
+            weather: "Normal",
+          };
+
+          this.setState({
+            weather_object: new_obj,
+          });
         }
       });
-    console.log(this.state);
   };
 
   dateBuilder = (d) => {
@@ -77,16 +90,18 @@ class App extends Component {
     let day = days[d.getDay()];
     let date = d.getDate();
     let month = months[d.getMonth()];
-    let year = d.getFullYear();
 
-    return `${day} ${date} ${month} ${year}`;
+    return `${day}, ${month} ${date}`;
   };
 
   render() {
     let weather_object = this.state.weather_object;
-    return (
-      <div className="App">
-        <div className="info-box">
+    let info_box_classes = "info-box " + weather_object.weather;
+
+    let return_object;
+    if (weather_object.city === "") {
+      return_object = (
+        <div className={info_box_classes}>
           <div className="input-box">
             <input
               id="city"
@@ -95,10 +110,27 @@ class App extends Component {
               placeholder="Search a city..."
               onChange={this.changeHandler}
             />
-            <p id="searching-city"></p>
+          </div>
+
+          <div className="no-result">No Result</div>
+        </div>
+      );
+    } else {
+      return_object = (
+        <div className={info_box_classes}>
+          <div className="input-box">
+            <input
+              id="city"
+              className="search-box"
+              type="text"
+              placeholder="Search a city..."
+              onChange={this.changeHandler}
+            />
           </div>
           <div className="location-box">
-            <div className="location">Khulna</div>
+            <div className="location">
+              {weather_object.city}, {weather_object.country}
+            </div>
             <div className="date-time">{this.dateBuilder(new Date())}</div>
           </div>
           <div className="weather-box">
@@ -110,11 +142,13 @@ class App extends Component {
               Feels like {weather_object.feels_like}
               <span>&#8451;</span>
             </div>
-            <div className="weather">Sunny</div>
+            <div className="weather">{weather_object.weather}</div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    return <div className="App">{return_object}</div>;
   }
 }
 
